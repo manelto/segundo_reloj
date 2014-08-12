@@ -11,6 +11,7 @@ static const char *meses[] = {
 };  
 	
 
+
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
 static GFont s_res_roboto_bold_subset_49;
@@ -30,6 +31,10 @@ static TextLayer *TLPuntB;
 static BitmapLayer *BLBat;
 static BitmapLayer *BLBlut;
 static TextLayer *TLBateria;
+
+GBitmap *png_bateria;
+
+
 
 static void initialise_ui(void) {
     
@@ -115,8 +120,13 @@ static void initialise_ui(void) {
   layer_add_child(window_get_root_layer(s_window), (Layer *)TLPuntB);
   
   // BLBat
+  png_bateria = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATERIA);
   BLBat = bitmap_layer_create(GRect(17, 143, 38, 14));
-  layer_add_child(window_get_root_layer(s_window), (Layer *)BLBat);
+
+  image_layer_set_bitmap(BLBat, "bateria");
+
+	
+  layer_add_child(window_get_root_layer(s_window), bitmap_layer_get_layer(BLBat));
   
   // BLBlut
   BLBlut = bitmap_layer_create(GRect(20, 90, 34, 21));

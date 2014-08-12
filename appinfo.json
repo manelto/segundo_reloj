@@ -9,6 +9,11 @@
     "resources": {
         "media": [
             {
+                "file": "images/Bateria.png",
+                "name": "RESOURCE_ID_IMAGE_BATERIA",
+                "type": "png-trans"
+            },
+            {
                 "file": "images/reloj2.png",
                 "menuIcon": true,
                 "name": "icono",
