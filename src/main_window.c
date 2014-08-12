@@ -1,9 +1,6 @@
-#include "main_window.h"
 #include <pebble.h>
 #include <stdio.h>
 	
-static TextLayer *TLBateria;
-
 static const char *dias[] = {
   "Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"
 };
@@ -32,11 +29,10 @@ static TextLayer *TLPuntN;
 static TextLayer *TLPuntB;
 static BitmapLayer *BLBat;
 static BitmapLayer *BLBlut;
+static TextLayer *TLBateria;
 
 static void initialise_ui(void) {
-  s_window = window_create();
-  window_set_fullscreen(s_window, true);
-  
+    
   s_res_roboto_bold_subset_49 = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);
   s_res_bitham_30_black = fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK);
   s_res_bitham_42_light = fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT);
@@ -46,7 +42,7 @@ static void initialise_ui(void) {
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLesqSI);
   
   // BLesqSD
-  BLesqSD = bitmap_layer_create(GRect(72, 0, 72, 84));
+  BLesqSD = bitmap_layer_create(GRect(70, 0, 72, 84));
   bitmap_layer_set_background_color(BLesqSD, GColorBlack);
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLesqSD);
   
@@ -60,7 +56,7 @@ static void initialise_ui(void) {
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLesqID);
   
   // TLHora
-  TLHora = text_layer_create(GRect(10, 10, 58, 64));
+  TLHora = text_layer_create(GRect(7, 10, 58, 64));
   text_layer_set_background_color(TLHora, GColorBlack);
   text_layer_set_text_color(TLHora, GColorWhite);
   text_layer_set_text(TLHora, "24");
@@ -102,7 +98,7 @@ static void initialise_ui(void) {
   layer_add_child(window_get_root_layer(s_window), (Layer *)TLMes);
   
   // TLPuntN
-  TLPuntN = text_layer_create(GRect(63, 10, 12, 56));
+  TLPuntN = text_layer_create(GRect(61, 10, 16, 56));
   text_layer_set_background_color(TLPuntN, GColorClear);
   text_layer_set_text(TLPuntN, ":");
   text_layer_set_text_alignment(TLPuntN, GTextAlignmentCenter);
@@ -110,7 +106,7 @@ static void initialise_ui(void) {
   layer_add_child(window_get_root_layer(s_window), (Layer *)TLPuntN);
   
   // TLPuntB
-  TLPuntB = text_layer_create(GRect(69, 10, 9, 60));
+  TLPuntB = text_layer_create(GRect(71, 10, 14, 56));
   text_layer_set_background_color(TLPuntB, GColorClear);
   text_layer_set_text_color(TLPuntB, GColorWhite);
   text_layer_set_text(TLPuntB, ":");
@@ -120,13 +116,19 @@ static void initialise_ui(void) {
   
   // BLBat
   BLBat = bitmap_layer_create(GRect(17, 143, 38, 14));
-  bitmap_layer_set_background_color(BLBat, GColorWhite);
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLBat);
   
   // BLBlut
   BLBlut = bitmap_layer_create(GRect(20, 90, 34, 21));
-  bitmap_layer_set_background_color(BLBlut, GColorWhite);
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLBlut);
+  
+  // TLBateria
+  TLBateria = text_layer_create(GRect(20, 143, 30, 18));
+  text_layer_set_background_color(TLBateria, GColorClear);
+  text_layer_set_text_color(TLBateria, GColorWhite);
+  text_layer_set_text(TLBateria, "100%");
+  text_layer_set_text_alignment(TLBateria, GTextAlignmentCenter);
+  layer_add_child(window_get_root_layer(s_window), (Layer *)TLBateria);
 }
 
 static void destroy_ui(void) {
@@ -144,17 +146,18 @@ static void destroy_ui(void) {
   text_layer_destroy(TLPuntB);
   bitmap_layer_destroy(BLBat);
   bitmap_layer_destroy(BLBlut);
+  text_layer_destroy(TLBateria);
 }
 // END AUTO-GENERATED UI CODE
 
 
 void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 {
-    
 	//Control de la carga de la batería
 	static char buffer_b[] = "100%";
 	static char buffer_dia[] = "00";
 	static char buffer_hora[] = "00";
+	static char buffer_min[] = "00";
 	BatteryChargeState state = battery_state_service_peek();
 	if (state.is_charging) {
 		strcpy(buffer_b, "×××");
@@ -180,38 +183,47 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed)
   	strftime(buffer_hora,sizeof("00"),"%H",tick_time);
 	text_layer_set_text(TLHora,buffer_hora);
 	
-	strftime(buffer_hora,sizeof("00"),"%M",tick_time);
-	text_layer_set_text(TLMinuto,buffer_hora);
+	strftime(buffer_min,sizeof("00"),"%M",tick_time);
+	text_layer_set_text(TLMinuto,buffer_min);
 }
 
-
-
-
-
-void show_main_window(void) {
-  	initialise_ui();
-	
+void window_load(Window *window)
+{
+	initialise_ui();
 	struct tm *t;
 	time_t temp;	
 	temp = time(NULL);	
 	t = localtime(&temp);	
 
-	//Manually call the tick handler when the window is loading
+	//Para la primera vez, lanzo manualmente la actualización del reloj
 	tick_handler(t, MINUTE_UNIT);
-}	
-
-static void handle_window_unload(Window* window) {
-  	destroy_ui();
-	text_layer_destroy(TLBateria);
-
-	tick_timer_service_subscribe(MINUTE_UNIT, (TickHandler) tick_handler);
-		window_set_window_handlers(s_window, (WindowHandlers) {
-    	.unload = handle_window_unload,
-  });
-  window_stack_push(s_window, true);
 }
 
-void hide_main_window(void) {
+void window_unload(Window* window) {
+  	destroy_ui();
+}
+
+void init() {
+	
+	tick_timer_service_subscribe(MINUTE_UNIT, (TickHandler) tick_handler);
+	s_window = window_create();
+	
+	window_set_window_handlers(s_window, (WindowHandlers) {
+		.load = window_load,
+		.unload = window_unload,
+	});
+
+	window_stack_push(s_window,true);
+}	
+
+
+void deinit() {
 	tick_timer_service_unsubscribe();
-  	window_stack_remove(s_window, true);
+  	window_destroy(s_window);
+}
+
+int main(void) {
+    init();
+    app_event_loop();
+	deinit();
 }
