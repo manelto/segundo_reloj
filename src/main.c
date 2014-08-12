@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include <stdio.h>
 #include "main_window.h"
 
 

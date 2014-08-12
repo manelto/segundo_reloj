@@ -1,5 +1,6 @@
 #include "main_window.h"
 #include <pebble.h>
+#include <stdio.h>
 	
 static TextLayer *TLBateria;
 
