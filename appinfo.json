@@ -1,0 +1,19 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "maneltorrecilla@infonegocio.co",
+    "longName": "segundo reloj",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "shortName": "segundo reloj",
+    "uuid": "713b2fed-cb02-462a-bf4f-91a266ff3633",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
