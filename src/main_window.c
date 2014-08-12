@@ -1,5 +1,17 @@
 #include "main_window.h"
 #include <pebble.h>
+	
+static TextLayer *TLBateria;
+
+static const char *dias[] = {
+  "Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"
+};
+
+static const char *meses[] = {
+  "ene", "feb", "mar", "abr", "may", "jun", 
+  "jul", "ago", "sep", "oct", "nov", "dic"
+};  
+	
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
@@ -134,18 +146,71 @@ static void destroy_ui(void) {
 }
 // END AUTO-GENERATED UI CODE
 
-static void handle_window_unload(Window* window) {
-  destroy_ui();
+
+void tick_handler(struct tm *tick_time, TimeUnits units_changed)
+{
+    
+	//Control de la carga de la batería
+	static char buffer_b[] = "100%";
+	static char buffer_dia[] = "00";
+	static char buffer_hora[] = "00";
+	BatteryChargeState state = battery_state_service_peek();
+	if (state.is_charging) {
+		strcpy(buffer_b, "×××");
+	} else {
+		snprintf(buffer_b, sizeof("100%"), "%d%%", state.charge_percent);
+	}
+	text_layer_set_text(TLBateria, buffer_b);
+	
+	static char txt_dia[] = "DOM";
+	static char txt_mes[] = "ENE";  
+	int dia = tick_time->tm_wday;
+	int mes = tick_time->tm_mon;
+
+	strcpy(txt_dia, dias[dia]);
+	text_layer_set_text(TLDiaSem, txt_dia);
+	
+	strcpy(txt_mes, meses[mes]);	  
+	text_layer_set_text(TLMes, txt_mes);
+	
+	strftime(buffer_dia,sizeof("00"),"%d",tick_time);
+	text_layer_set_text(TLDia,buffer_dia);
+  
+  	strftime(buffer_hora,sizeof("00"),"%H",tick_time);
+	text_layer_set_text(TLHora,buffer_hora);
+	
+	strftime(buffer_hora,sizeof("00"),"%M",tick_time);
+	text_layer_set_text(TLMinuto,buffer_hora);
 }
 
+
+
+
+
 void show_main_window(void) {
-  initialise_ui();
-  window_set_window_handlers(s_window, (WindowHandlers) {
-    .unload = handle_window_unload,
+  	initialise_ui();
+	
+	struct tm *t;
+	time_t temp;	
+	temp = time(NULL);	
+	t = localtime(&temp);	
+
+	//Manually call the tick handler when the window is loading
+	tick_handler(t, MINUTE_UNIT);
+}	
+
+static void handle_window_unload(Window* window) {
+  	destroy_ui();
+	text_layer_destroy(TLBateria);
+
+	tick_timer_service_subscribe(MINUTE_UNIT, (TickHandler) tick_handler);
+		window_set_window_handlers(s_window, (WindowHandlers) {
+    	.unload = handle_window_unload,
   });
   window_stack_push(s_window, true);
 }
 
 void hide_main_window(void) {
-  window_stack_remove(s_window, true);
+	tick_timer_service_unsubscribe();
+  	window_stack_remove(s_window, true);
 }
