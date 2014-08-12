@@ -7,9 +7,16 @@
     "longName": "segundo reloj",
     "projectType": "native",
     "resources": {
-        "media": []
+        "media": [
+            {
+                "file": "images/reloj2.png",
+                "menuIcon": true,
+                "name": "icono",
+                "type": "png"
+            }
+        ]
     },
-    "shortName": "segundo reloj",
+    "shortName": "reloj 2",
     "uuid": "713b2fed-cb02-462a-bf4f-91a266ff3633",
     "versionCode": 1,
     "versionLabel": "1.0",
