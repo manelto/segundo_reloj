@@ -10,6 +10,11 @@ static const char *meses[] = {
   "jul", "ago", "sep", "oct", "nov", "dic"
 };  
 	
+// para controlar el parpadeo de los segundos
+int pulso =1;
+
+// para iniciar el reloj, aunque no haya transcurrido un segundo, la primera vez
+int inicializacion = 1;
 
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
@@ -17,6 +22,7 @@ static Window *s_window;
 static GFont s_res_roboto_bold_subset_49;
 static GFont s_res_bitham_30_black;
 static GFont s_res_bitham_42_light;
+
 static BitmapLayer *BLesqSI;
 static BitmapLayer *BLesqSD;
 static BitmapLayer *BLesqII;
@@ -32,32 +38,33 @@ static BitmapLayer *BLBat;
 static BitmapLayer *BLBlut;
 static TextLayer *TLBateria;
 
-GBitmap *png_bateria;
-
-
+static GBitmap *bateria_png;
+static GBitmap *bl_png;
 
 static void initialise_ui(void) {
     
   s_res_roboto_bold_subset_49 = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);
   s_res_bitham_30_black = fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK);
   s_res_bitham_42_light = fonts_get_system_font(FONT_KEY_BITHAM_42_LIGHT);
+
+	
   // BLesqSI
   BLesqSI = bitmap_layer_create(GRect(0, 0, 72, 84));
   bitmap_layer_set_background_color(BLesqSI, GColorWhite);
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLesqSI);
   
   // BLesqSD
-  BLesqSD = bitmap_layer_create(GRect(70, 0, 72, 84));
+  BLesqSD = bitmap_layer_create(GRect(70, 0, 73, 84));
   bitmap_layer_set_background_color(BLesqSD, GColorBlack);
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLesqSD);
   
   // BLesqII
-  BLesqII = bitmap_layer_create(GRect(0, 84, 72, 84));
+  BLesqII = bitmap_layer_create(GRect(0, 84, 73, 84));
   bitmap_layer_set_background_color(BLesqII, GColorBlack);
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLesqII);
   
   // BLesqID
-  BLesqID = bitmap_layer_create(GRect(72, 84, 72, 84));
+  BLesqID = bitmap_layer_create(GRect(76, 84, 72, 84));
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLesqID);
   
   // TLHora
@@ -77,16 +84,16 @@ static void initialise_ui(void) {
   layer_add_child(window_get_root_layer(s_window), (Layer *)TLMinuto);
   
   // TLDiaSem
-  TLDiaSem = text_layer_create(GRect(0, 106, 71, 40));
+  TLDiaSem = text_layer_create(GRect(0, 92, 68, 50));
   text_layer_set_background_color(TLDiaSem, GColorClear);
   text_layer_set_text_color(TLDiaSem, GColorWhite);
-  text_layer_set_text(TLDiaSem, "Dom");
+  text_layer_set_text(TLDiaSem, "dom");
   text_layer_set_text_alignment(TLDiaSem, GTextAlignmentCenter);
   text_layer_set_font(TLDiaSem, s_res_bitham_30_black);
   layer_add_child(window_get_root_layer(s_window), (Layer *)TLDiaSem);
   
   // TLDia
-  TLDia = text_layer_create(GRect(77, 82, 60, 46));
+  TLDia = text_layer_create(GRect(80, 82, 60, 46));
   text_layer_set_background_color(TLDia, GColorClear);
   text_layer_set_text(TLDia, "30");
   text_layer_set_text_alignment(TLDia, GTextAlignmentCenter);
@@ -120,26 +127,37 @@ static void initialise_ui(void) {
   layer_add_child(window_get_root_layer(s_window), (Layer *)TLPuntB);
   
   // BLBat
-  png_bateria = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BATERIA);
-  BLBat = bitmap_layer_create(GRect(17, 143, 38, 14));
-
-  image_layer_set_bitmap(BLBat, "bateria");
-
+  BLBat = bitmap_layer_create(GRect(15, 141, 55, 21));	
+  bitmap_layer_set_bitmap(BLBat, gbitmap_create_with_resource(RESOURCE_ID_BATERIA_BLACK));
+  layer_add_child(window_get_root_layer(s_window), (Layer *)BLBat);
 	
-  layer_add_child(window_get_root_layer(s_window), bitmap_layer_get_layer(BLBat));
   
   // BLBlut
-  BLBlut = bitmap_layer_create(GRect(20, 90, 34, 21));
+  BLBlut = bitmap_layer_create(GRect(0, 141, 12, 21));
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLBlut);
   
   // TLBateria
-  TLBateria = text_layer_create(GRect(20, 143, 30, 18));
+  TLBateria = text_layer_create(GRect(17, 142, 30, 18));
   text_layer_set_background_color(TLBateria, GColorClear);
   text_layer_set_text_color(TLBateria, GColorWhite);
   text_layer_set_text(TLBateria, "100%");
-  text_layer_set_text_alignment(TLBateria, GTextAlignmentCenter);
+  text_layer_set_text_alignment(TLBateria, GTextAlignmentRight);
   layer_add_child(window_get_root_layer(s_window), (Layer *)TLBateria);
+	
 }
+
+static void sustituye_imagen(GBitmap **imagen, BitmapLayer *bmp_layer, const int resource_id, GPoint origen) {
+    GBitmap *vieja_imagen = *imagen;
+    *imagen = gbitmap_create_with_resource(resource_id);
+    GRect frame = (GRect) {
+        .origin = origen,
+        .size = (*imagen)->bounds.size
+    };
+    bitmap_layer_set_bitmap(bmp_layer, *imagen);
+    layer_set_frame(bitmap_layer_get_layer(bmp_layer), frame);
+    gbitmap_destroy(vieja_imagen);
+}
+
 
 static void destroy_ui(void) {
   window_destroy(s_window);
@@ -163,38 +181,68 @@ static void destroy_ui(void) {
 
 void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 {
-	//Control de la carga de la batería
-	static char buffer_b[] = "100%";
-	static char buffer_dia[] = "00";
-	static char buffer_hora[] = "00";
-	static char buffer_min[] = "00";
-	BatteryChargeState state = battery_state_service_peek();
-	if (state.is_charging) {
-		strcpy(buffer_b, "×××");
-	} else {
+	if (units_changed & SECOND_UNIT) {
+		//cambios producidos cada segundo
+		if (pulso == 1) {
+			text_layer_set_text(TLPuntB, " ");
+			text_layer_set_text(TLPuntN, " ");
+			pulso = 0;
+		} else {
+			text_layer_set_text(TLPuntB, ":");
+			text_layer_set_text(TLPuntN, ":");
+			pulso = 1;
+		}
+		BatteryChargeState state = battery_state_service_peek();
+		if (state.is_charging) {
+			sustituye_imagen(&bateria_png, BLBat, RESOURCE_ID_CARGANDO_BLACK, GPoint(15, 141));
+		} else {
+			sustituye_imagen(&bateria_png, BLBat, RESOURCE_ID_BATERIA_BLACK, GPoint(15, 141));
+		}
+		static char buffer_b[] = "100%";
 		snprintf(buffer_b, sizeof("100%"), "%d%%", state.charge_percent);
+		text_layer_set_text(TLBateria, buffer_b);
+		
 	}
-	text_layer_set_text(TLBateria, buffer_b);
-	
-	static char txt_dia[] = "DOM";
-	static char txt_mes[] = "ENE";  
-	int dia = tick_time->tm_wday;
-	int mes = tick_time->tm_mon;
 
-	strcpy(txt_dia, dias[dia]);
-	text_layer_set_text(TLDiaSem, txt_dia);
-	
-	strcpy(txt_mes, meses[mes]);	  
-	text_layer_set_text(TLMes, txt_mes);
-	
-	strftime(buffer_dia,sizeof("00"),"%d",tick_time);
-	text_layer_set_text(TLDia,buffer_dia);
-  
-  	strftime(buffer_hora,sizeof("00"),"%H",tick_time);
-	text_layer_set_text(TLHora,buffer_hora);
-	
-	strftime(buffer_min,sizeof("00"),"%M",tick_time);
-	text_layer_set_text(TLMinuto,buffer_min);
+	if (units_changed & MINUTE_UNIT || inicializacion == 1) {
+		// Cambios producidos casa minuto
+		inicializacion = 0;
+		//Control de la carga de la batería
+		
+		static char buffer_dia[] = "00";
+		static char buffer_hora[] = "00";
+		static char buffer_min[] = "00";
+		static char txt_dia[] = "iii ";
+		static char txt_mes[] = "ene ";  
+		int dia = tick_time->tm_wday;
+		int mes = tick_time->tm_mon;
+
+		strcpy(txt_dia, dias[dia]);
+		text_layer_set_text(TLDiaSem, txt_dia);
+
+		strcpy(txt_mes, meses[mes]);	  
+		text_layer_set_text(TLMes, txt_mes);
+
+		strftime(buffer_dia,sizeof("00 "),"%d",tick_time);
+		text_layer_set_text(TLDia,buffer_dia);
+
+		strftime(buffer_hora,sizeof("00 "),"%H",tick_time);
+		text_layer_set_text(TLHora,buffer_hora);
+
+		strftime(buffer_min,sizeof("00 "),"%M",tick_time);
+		text_layer_set_text(TLMinuto,buffer_min);
+	}
+}
+
+static void bluetooth_connection_callback(bool connected)
+{
+		
+	if(connected == false)
+	{
+		sustituye_imagen(&bl_png, BLBlut, RESOURCE_ID_BLDESC_BLACK, GPoint(0, 141));
+	} else {
+		sustituye_imagen(&bl_png, BLBlut, RESOURCE_ID_BL_BLACK, GPoint(0, 141));
+	}
 }
 
 void window_load(Window *window)
@@ -204,18 +252,26 @@ void window_load(Window *window)
 	time_t temp;	
 	temp = time(NULL);	
 	t = localtime(&temp);	
-
-	//Para la primera vez, lanzo manualmente la actualización del reloj
-	tick_handler(t, MINUTE_UNIT);
+	
+	bool conectado = bluetooth_connection_service_peek();
+	
+	//Para la primera vez, lanzo manualmente la actualización del reloj y bluetooth
+	tick_handler(t, SECOND_UNIT);
+	bluetooth_connection_callback(conectado);
 }
 
 void window_unload(Window* window) {
   	destroy_ui();
+	gbitmap_destroy(bateria_png);
+	gbitmap_destroy(bl_png);
 }
 
 void init() {
 	
-	tick_timer_service_subscribe(MINUTE_UNIT, (TickHandler) tick_handler);
+	tick_timer_service_subscribe(SECOND_UNIT, (TickHandler) tick_handler);
+
+	bluetooth_connection_service_subscribe(bluetooth_connection_callback);
+	
 	s_window = window_create();
 	
 	window_set_window_handlers(s_window, (WindowHandlers) {
@@ -229,6 +285,7 @@ void init() {
 
 void deinit() {
 	tick_timer_service_unsubscribe();
+	bluetooth_connection_service_unsubscribe();
   	window_destroy(s_window);
 }
 
@@ -236,4 +293,5 @@ int main(void) {
     init();
     app_event_loop();
 	deinit();
+	return 0;
 }
