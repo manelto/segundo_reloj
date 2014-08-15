@@ -9,6 +9,16 @@
     "resources": {
         "media": [
             {
+                "file": "images/Bateria.png",
+                "name": "BATERIA",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/cargando.png",
+                "name": "CARGANDO",
+                "type": "png-trans"
+            },
+            {
                 "file": "images/reloj2.png",
                 "menuIcon": true,
                 "name": "icono",
@@ -22,16 +32,6 @@
             {
                 "file": "images/bl.png",
                 "name": "BL",
-                "type": "png-trans"
-            },
-            {
-                "file": "images/Bateria.png",
-                "name": "BATERIA",
-                "type": "png-trans"
-            },
-            {
-                "file": "images/cargando.png",
-                "name": "CARGANDO",
                 "type": "png-trans"
             }
         ]

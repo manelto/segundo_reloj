@@ -1,20 +1,16 @@
 #include <pebble.h>
 #include <stdio.h>
+#include "spain.h"
 	
-static const char *dias[] = {
-  "Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"
-};
-
-static const char *meses[] = {
-  "ene", "feb", "mar", "abr", "may", "jun", 
-  "jul", "ago", "sep", "oct", "nov", "dic"
-};  
 	
 // para controlar el parpadeo de los segundos
 int pulso =1;
 
 // para iniciar el reloj, aunque no haya transcurrido un segundo, la primera vez
 int inicializacion = 1;
+
+// para cambiar el idioma de los literales de meses y días uso un índice
+int idioma = 0;
 
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
@@ -137,13 +133,26 @@ static void initialise_ui(void) {
   layer_add_child(window_get_root_layer(s_window), (Layer *)BLBlut);
   
   // TLBateria
-  TLBateria = text_layer_create(GRect(17, 142, 30, 18));
+  TLBateria = text_layer_create(GRect(20, 142, 30, 18));
   text_layer_set_background_color(TLBateria, GColorClear);
   text_layer_set_text_color(TLBateria, GColorWhite);
-  text_layer_set_text(TLBateria, "100%");
-  text_layer_set_text_alignment(TLBateria, GTextAlignmentRight);
+  text_layer_set_text(TLBateria, "100");
+  text_layer_set_text_alignment(TLBateria, GTextAlignmentCenter);
   layer_add_child(window_get_root_layer(s_window), (Layer *)TLBateria);
 	
+}
+
+void select_click_handler(ClickRecognizerRef recognizer, void *context)
+{
+	idioma = idioma+1;
+	if (idioma>1) {
+		idioma = 0;
+	}
+}
+
+void click_config_provider(void *context)
+{
+    window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
 }
 
 static void sustituye_imagen(GBitmap **imagen, BitmapLayer *bmp_layer, const int resource_id, GPoint origen) {
@@ -178,8 +187,41 @@ static void destroy_ui(void) {
 }
 // END AUTO-GENERATED UI CODE
 
+static void handle_bluetooth(bool connected)
+{
+	GRect frame = layer_get_frame((Layer *) BLBlut);
+	GPoint pos = {frame.origin.x, frame.origin.y};
+	const VibePattern pattern = {
+  			.durations = (uint32_t []) {100, 300, 300, 300, 100, 300},
+  			.num_segments = 6
+	};
+	
+	if(connected == false)
+	{
+		sustituye_imagen(&bl_png, BLBlut, RESOURCE_ID_BLDESC_BLACK, pos);
+		vibes_enqueue_custom_pattern(pattern);
+	} else {
+		sustituye_imagen(&bl_png, BLBlut, RESOURCE_ID_BL_BLACK, pos);
+	}
+}
 
-void tick_handler(struct tm *tick_time, TimeUnits units_changed)
+static void handle_battery(BatteryChargeState estado) {
+	GRect frame = layer_get_frame((Layer *) BLBat);
+	GPoint pos = {frame.origin.x, frame.origin.y};
+	
+	if (estado.is_charging) {
+		sustituye_imagen(&bateria_png, BLBat, RESOURCE_ID_CARGANDO_BLACK, pos);
+	} else if (estado.is_plugged) {
+		sustituye_imagen(&bateria_png, BLBat, RESOURCE_ID_CARGANDO_BLACK, pos);
+	} else {
+		sustituye_imagen(&bateria_png, BLBat, RESOURCE_ID_BATERIA_BLACK, pos);
+	}
+	static char buffer_b[] = "100 ";
+	snprintf(buffer_b, sizeof(buffer_b), "%d", estado.charge_percent);
+	text_layer_set_text(TLBateria, buffer_b);	
+}
+
+void handle_time(struct tm *tick_time, TimeUnits units_changed)
 {
 	if (units_changed & SECOND_UNIT) {
 		//cambios producidos cada segundo
@@ -191,88 +233,68 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 			text_layer_set_text(TLPuntB, ":");
 			text_layer_set_text(TLPuntN, ":");
 			pulso = 1;
-		}
-		BatteryChargeState state = battery_state_service_peek();
-		if (state.is_charging) {
-			sustituye_imagen(&bateria_png, BLBat, RESOURCE_ID_CARGANDO_BLACK, GPoint(15, 141));
-		} else {
-			sustituye_imagen(&bateria_png, BLBat, RESOURCE_ID_BATERIA_BLACK, GPoint(15, 141));
-		}
-		static char buffer_b[] = "100%";
-		snprintf(buffer_b, sizeof("100%"), "%d%%", state.charge_percent);
-		text_layer_set_text(TLBateria, buffer_b);
-		
+		}		
 	}
 
 	if (units_changed & MINUTE_UNIT || inicializacion == 1) {
-		// Cambios producidos casa minuto
+		// Cambios producidos cada minuto
 		inicializacion = 0;
-		//Control de la carga de la batería
 		
 		static char buffer_dia[] = "00";
 		static char buffer_hora[] = "00";
 		static char buffer_min[] = "00";
-		static char txt_dia[] = "iii ";
+		static char txt_dia[] = "dom ";
 		static char txt_mes[] = "ene ";  
 		int dia = tick_time->tm_wday;
 		int mes = tick_time->tm_mon;
 
-		strcpy(txt_dia, dias[dia]);
+		strncpy(txt_dia, dias[7*idioma+dia], sizeof(dias[7*idioma+dia]));
 		text_layer_set_text(TLDiaSem, txt_dia);
 
-		strcpy(txt_mes, meses[mes]);	  
+		strncpy(txt_mes, meses[12*idioma+mes], sizeof(meses[12*idioma+mes]));	  
 		text_layer_set_text(TLMes, txt_mes);
 
-		strftime(buffer_dia,sizeof("00 "),"%d",tick_time);
+		strftime(buffer_dia,sizeof("00"),"%d",tick_time);
 		text_layer_set_text(TLDia,buffer_dia);
 
-		strftime(buffer_hora,sizeof("00 "),"%H",tick_time);
+		strftime(buffer_hora,sizeof("00"),"%H",tick_time);
 		text_layer_set_text(TLHora,buffer_hora);
 
-		strftime(buffer_min,sizeof("00 "),"%M",tick_time);
+		strftime(buffer_min,sizeof("00"),"%M",tick_time);
 		text_layer_set_text(TLMinuto,buffer_min);
+		
+		handle_battery(battery_state_service_peek());
 	}
 }
 
-static void bluetooth_connection_callback(bool connected)
-{
-		
-	if(connected == false)
-	{
-		sustituye_imagen(&bl_png, BLBlut, RESOURCE_ID_BLDESC_BLACK, GPoint(0, 141));
-	} else {
-		sustituye_imagen(&bl_png, BLBlut, RESOURCE_ID_BL_BLACK, GPoint(0, 141));
-	}
-}
+
 
 void window_load(Window *window)
 {
 	initialise_ui();
-	struct tm *t;
-	time_t temp;	
-	temp = time(NULL);	
-	t = localtime(&temp);	
-	
-	bool conectado = bluetooth_connection_service_peek();
-	
 	//Para la primera vez, lanzo manualmente la actualización del reloj y bluetooth
-	tick_handler(t, SECOND_UNIT);
-	bluetooth_connection_callback(conectado);
+	time_t temp = time(NULL);
+	handle_time(localtime(&temp), SECOND_UNIT);
+	handle_battery(battery_state_service_peek());
+	handle_bluetooth(bluetooth_connection_service_peek());
+
 }
 
 void window_unload(Window* window) {
-  	destroy_ui();
 	gbitmap_destroy(bateria_png);
 	gbitmap_destroy(bl_png);
+  	destroy_ui();
 }
 
 void init() {
 	
-	tick_timer_service_subscribe(SECOND_UNIT, (TickHandler) tick_handler);
-
-	bluetooth_connection_service_subscribe(bluetooth_connection_callback);
+	tick_timer_service_subscribe(SECOND_UNIT, &handle_time);
+	bluetooth_connection_service_subscribe(&handle_bluetooth);
+	battery_state_service_subscribe(&handle_battery);
+	
 	
 	s_window = window_create();
+	window_set_click_config_provider(s_window, click_config_provider);
 	
 	window_set_window_handlers(s_window, (WindowHandlers) {
 		.load = window_load,
@@ -286,12 +308,12 @@ void init() {
 void deinit() {
 	tick_timer_service_unsubscribe();
 	bluetooth_connection_service_unsubscribe();
-  	window_destroy(s_window);
+	battery_state_service_unsubscribe();
+  	//window_destroy(s_window);
 }
 
 int main(void) {
     init();
     app_event_loop();
 	deinit();
-	return 0;
 }
