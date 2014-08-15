@@ -248,19 +248,6 @@ void handle_time(struct tm *tick_time, TimeUnits units_changed)
 		static char txt_mes[] = "ene ";  
 		int dia = tick_time->tm_wday;
 		int mes = tick_time->tm_mon;
-
-		strncpy(txt_dia, dias[7*idioma+dia], sizeof(dias[7*idioma+dia]));
-		text_layer_set_text(TLDiaSem, txt_dia);
-
-		strncpy(txt_mes, meses[12*idioma+mes], sizeof(meses[12*idioma+mes]));	  
-		text_layer_set_text(TLMes, txt_mes);
-
-		strftime(buffer_dia,sizeof("00"),"%d",tick_time);
-		text_layer_set_text(TLDia,buffer_dia);
-
-		strftime(buffer_hora,sizeof("00"),"%H",tick_time);
-		text_layer_set_text(TLHora,buffer_hora);
-
 		strftime(buffer_min,sizeof("00"),"%M",tick_time);
 		text_layer_set_text(TLMinuto,buffer_min);
 		
@@ -268,7 +255,16 @@ void handle_time(struct tm *tick_time, TimeUnits units_changed)
 	}
 if (units_changed & HOUR_UNIT  || iniciaHora == 1) {
     iniciaHora = 0;
+    		strftime(buffer_hora,sizeof("00"),"%H",tick_time);
+		text_layer_set_text(TLHora,buffer_hora);
+strncpy(txt_dia, dias[7*idioma+dia], sizeof(dias[7*idioma+dia]));
+		text_layer_set_text(TLDiaSem, txt_dia);
 
+		strncpy(txt_mes, meses[12*idioma+mes], sizeof(meses[12*idioma+mes]));	  
+		text_layer_set_text(TLMes, txt_mes);
+
+		strftime(buffer_dia,sizeof("00"),"%d",tick_time);
+		text_layer_set_text(TLDia,buffer_dia);
 }
 }
 
