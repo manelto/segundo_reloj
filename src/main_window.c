@@ -240,14 +240,9 @@ void handle_time(struct tm *tick_time, TimeUnits units_changed)
 	if (units_changed & MINUTE_UNIT || inicializacion == 1) {
 		// Cambios producidos cada minuto
 		inicializacion = 0;
-		
-		static char buffer_dia[] = "00";
-		static char buffer_hora[] = "00";
 		static char buffer_min[] = "00";
-		static char txt_dia[] = "dom ";
-		static char txt_mes[] = "ene ";  
-		int dia = tick_time->tm_wday;
-		int mes = tick_time->tm_mon;
+
+		
 		strftime(buffer_min,sizeof("00"),"%M",tick_time);
 		text_layer_set_text(TLMinuto,buffer_min);
 		
@@ -255,6 +250,13 @@ void handle_time(struct tm *tick_time, TimeUnits units_changed)
 	}
 if (units_changed & HOUR_UNIT  || iniciaHora == 1) {
     iniciaHora = 0;
+static char buffer_dia[] = "00";
+		static char buffer_hora[] = "00";
+		
+		static char txt_dia[] = "dom ";
+		static char txt_mes[] = "ene ";  
+		int dia = tick_time->tm_wday;
+		int mes = tick_time->tm_mon;
     		strftime(buffer_hora,sizeof("00"),"%H",tick_time);
 		text_layer_set_text(TLHora,buffer_hora);
 strncpy(txt_dia, dias[7*idioma+dia], sizeof(dias[7*idioma+dia]));
