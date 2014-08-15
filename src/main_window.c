@@ -8,6 +8,7 @@ int pulso =1;
 
 // para iniciar el reloj, aunque no haya transcurrido un segundo, la primera vez
 int inicializacion = 1;
+int iniciaHora= 1;
 
 // para cambiar el idioma de los literales de meses y días uso un índice
 int idioma = 0;
@@ -265,6 +266,10 @@ void handle_time(struct tm *tick_time, TimeUnits units_changed)
 		
 		handle_battery(battery_state_service_peek());
 	}
+if (units_changed & HOUR_UNIT  || iniciaHora == 1) {
+    iniciaHora = 0;
+
+}
 }
 
 
